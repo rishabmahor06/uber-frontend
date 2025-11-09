@@ -332,7 +332,7 @@ const Home = () => {
 
   return (
     <div className="relative h-screen ">
-      <div className="flex justify-between items-center absolute w-full px-5 py-5">
+      <div className="flex justify-between items-center absolute w-full px-5 py-5 z-50">
         <img className="w-10" src={logo} alt="" />
         <button
           onClick={handleLogout}

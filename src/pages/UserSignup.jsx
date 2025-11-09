@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
-
+import toast, { Toaster } from "react-hot-toast";
 import { UserDataContext } from "../context/UserContext";
 
 const UserSignup = () => {
@@ -9,113 +9,168 @@ const UserSignup = () => {
   const [password, setPassword] = useState("");
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
-  const [userData, setUserData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserDataContext);
 
   const submitHandle = async (e) => {
     e.preventDefault();
-    const newuser = {
+    setIsLoading(true);
+
+    const newUser = {
       fullname: {
-        firstname: firstname,
-        lastname: lastname,
+        firstname,
+        lastname,
       },
-      email: email,
-      password: password,
+      email,
+      password,
     };
 
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/users/register`,
-      newuser
-    );
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/users/register`,
+        newUser
+      );
 
-    if (response.status === 201) {
-      const data = response.data;
+      if (response.status === 201) {
+        const data = response.data;
+        setUser(data.user);
 
-      setUser(data.user);
-      // persist user and token so provider can initialize from storage
-      try {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      } catch (err) {
-        console.error("Failed to persist user to localStorage:", err);
+        try {
+          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("token", data.token);
+        } catch (err) {
+          console.error("Failed to persist user to localStorage:", err);
+        }
+
+        toast.success("Account created successfully! 🎉");
+        
+        // Navigate after a short delay to show toast
+        setTimeout(() => {
+          navigate("/home");
+        }, 1000);
       }
-      localStorage.setItem("token", data.token);
-
-      navigate("/home");
+    } catch (error) {
+      console.error("Registration failed:", error.response?.data || error.message);
+      toast.error(
+        error.response?.data?.message || "Registration failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+      // Reset fields only after request is done
+      setEmail("");
+      setPassword("");
+      setFirstName("");
+      setLastName("");
     }
-    setEmail("");
-    setPassword("");
-    setFirstName("");
-    setLastName("");
   };
 
   return (
-    <div>
-      <div className="p-7 h-screen flex flex-col justify-between">
-        <div>
+    <div className="min-h-screen bg-white">
+      <Toaster position="top-center" reverseOrder={false} />
+      
+      <div className="p-7 min-h-screen flex flex-col justify-between">
+        <div className="flex-1">
           <img
-            className="w-14 mb-10 ml-1"
+            className="w-16 mb-10"
             src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
-            alt=""
+            alt="Uber logo"
           />
-          <form onSubmit={submitHandle}>
-            <h3 className="text-base font-medium mb-2">Whats Your Name</h3>
-            <div className="flex gap-2 mb-5">
+          
+          <form onSubmit={submitHandle} className="space-y-5">
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                What's Your Name
+              </h3>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  required
+                  value={firstname}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  disabled={isLoading}
+                  className="bg-gray-100 rounded-lg px-4 py-3 w-1/2 text-base placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <input
+                  type="text"
+                  required
+                  value={lastname}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  disabled={isLoading}
+                  className="bg-gray-100 rounded-lg px-4 py-3 w-1/2 text-base placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                What's Your Email
+              </h3>
               <input
-                type="text"
+                type="email"
                 required
-                value={firstname}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="First name"
-                className="bg-[#eeeeee] rounded px-4 py-2 border-b-2 w-1/2 text-base placeholder:text-sm"
-              />
-              <input
-                type="text"
-                required
-                value={lastname}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Last Name"
-                className="bg-[#eeeeee] rounded px-4 py-2 border-b-2 w-1/2 text-base placeholder:text-sm"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                disabled={isLoading}
+                className="bg-gray-100 rounded-lg px-4 py-3 w-full text-base placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
-            <h3 className="text-lg font-medium mb-2">Whats Your Email</h3>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@example.com"
-              className="bg-[#eeeeee] mb-5 rounded px-4 py-2 border-b-2 w-full text-base placeholder:text-sm"
-            />
-            <h3 className="text-lg font-medium mb-2">Enter Password</h3>
-            <input
-              type="password"
-              required
-              value={password}
-              autoComplete="new-password"
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="bg-[#eeeeee] mb-5 rounded px-4 py-2 border-b-2 w-full text-base placeholder:text-sm"
-            />
-            <button className="bg-black text-white mb-3 rounded px-4 py-2  w-full text-lg ">
-              Create Account
+
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                Enter Password
+              </h3>
+              <input
+                type="password"
+                required
+                value={password}
+                autoComplete="new-password"
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                disabled={isLoading}
+                className="bg-gray-100 rounded-lg px-4 py-3 w-full text-base placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="bg-black text-white rounded-lg px-4 py-3 w-full text-lg font-semibold hover:bg-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em]"></div>
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
-          <p className="text-center">
+
+          <p className="text-center mt-6 text-gray-700">
             Already have an account?{" "}
-            <Link to="/userlogin" className="text-blue-600">
+            <Link to="/userlogin" className="text-blue-600 font-medium hover:underline">
               Login
             </Link>
           </p>
         </div>
-        <div className="flex gap-2 ">
-          <input type="checkbox" />
-          <p className="text-xs leading-tight text-justify">
-            By procceding, your consent to get calls, Whatsapp or SMS messges,
+
+        <div className="flex gap-3 items-start mt-8">
+          <input
+            type="checkbox"
+            id="consent"
+            className="mt-1 w-4 h-4 accent-black cursor-pointer"
+          />
+          <label htmlFor="consent" className="text-xs leading-tight text-gray-600">
+            By proceeding, you consent to get calls, WhatsApp or SMS messages,
             including by automated means, from Uber and its affiliates to the
             number provided.
-          </p>
+          </label>
         </div>
       </div>
     </div>
