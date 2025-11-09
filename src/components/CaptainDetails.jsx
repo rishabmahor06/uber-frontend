@@ -22,7 +22,7 @@ const CaptainDetails = () => {
     }
   }, [captain, setCaptain]);
 
-  // Always prepare display values, falling back to placeholders if needed
+  // Always prepare display values, falling back to placeholders 
   const firstName = captain?.fullname?.firstname || "";
   const lastName = captain?.fullname?.lastname || "";
   const displayName = (firstName + " " + lastName).trim() || "Captain";
@@ -30,7 +30,7 @@ const CaptainDetails = () => {
     captain?.avatar ||
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0kSjTb8XolsShk0Ab50yKigE_YWh6EFy8Vw&s";
 
-  // Show skeleton UI while loading but keep the layout consistent
+  // Show skeleton UI while loading but keep t
   const isLoading = !captain;
 
   return (
