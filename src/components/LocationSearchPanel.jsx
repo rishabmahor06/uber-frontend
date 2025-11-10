@@ -2,11 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { IoLocationSharp } from "react-icons/io5";
 import axios from "../utils/axios";
 
-// props:
-// - activeField: 'pickup' | 'destination'
-// - query: current input text
-// - setPickup / setDestination: setters from parent
-// - setPanelOpen / setVehiclePanel: controls from parent
+
 const LocationSearchPanel = ({
   activeField,
   query = "",

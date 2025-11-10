@@ -133,11 +133,7 @@ const CaptainLiveTracking = () => {
           options={mapOptions}
           onLoad={setMap}
         />
-        {map && (
-          <div className="absolute top-4 right-4 bg-white p-2 rounded-lg shadow-md">
-            <strong>Location Status:</strong> {currentPosition ? "Active" : "Acquiring..."}
-          </div>
-        )}
+        
       </div>
     </LoadScript>
   );

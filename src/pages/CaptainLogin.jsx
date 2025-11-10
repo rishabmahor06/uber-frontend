@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
 import toast, { Toaster } from "react-hot-toast";
 import { CaptainDataContext } from "../context/CaptainContext";
-
+import logo from "../assets/speed-logo.png";
 const CaptainLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -95,14 +95,14 @@ const CaptainLogin = () => {
 
           <div className="">
             <img
-              className="w-16 h-16 object-contain"
-              src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+              className="w-12 h-16 object-contain"
+              src={logo}
               alt="Uber Logo"
             />
           </div>
 
           {/* Title Section */}
-          <div className="">
+          <div className="flex justify-center items-start ">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3">
               Captain Login
             </h1>
@@ -154,7 +154,7 @@ const CaptainLogin = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gray-900 text-white font-bold rounded-xl py-4 text-lg hover:bg-black transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-[0.98] duration-200 mt-8"
+              className="bg-black text-white rounded-lg px-4 py-3 w-full text-lg font-semibold hover:bg-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -170,7 +170,7 @@ const CaptainLogin = () => {
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Want to join our fleet?{" "}
+              New here?{" "}
               <Link
                 to="/Captainsignup"
                 className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors"
@@ -182,21 +182,12 @@ const CaptainLogin = () => {
         </div>
 
         {/* User Login Button */}
-        <div className="pb-4">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-500 font-medium">
-                Not a captain?
-              </span>
-            </div>
-          </div>
+        <div className="pb-4 mb-6">
+          
 
           <Link
             to="/userlogin"
-            className="bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white flex items-center justify-center rounded-xl py-4 w-full text-lg font-bold transition-all shadow-md hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] duration-200"
+            className="bg-[#10b461] flex items-center justify-center text-white rounded-lg px-4 py-3 w-full text-lg font-semibold hover:bg-[#0ea152] transition-all"
           >
             Sign in as User
           </Link>

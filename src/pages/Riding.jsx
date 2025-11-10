@@ -1,11 +1,10 @@
 import React, { useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { IoLocationSharp } from "react-icons/io5";
-import axios from "../utils/axios";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SocketContext } from "../context/SocketContext";
 import LiveTracking from "../components/LiveTracking";
+import logo from "../assets/speed-logo.png";
 
 const Riding = () => {
   const location = useLocation();
@@ -33,8 +32,8 @@ const Riding = () => {
       <div className="h-1/2 p-4">
         <div className=" flex gap-2 justify-between items-center">
           <img
-            className="h-20 "
-            src="https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,h_368,w_552/v1743773253/assets/5e/8ce23d-35fa-425d-a7d2-08a2826d04bc/original/UberBlackXL.png"
+            className="h-12 "
+            src={logo}
             alt=""
           />{" "}
           <div className="text-right">

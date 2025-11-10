@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
 import toast, { Toaster } from "react-hot-toast";
 import { UserDataContext } from "../context/UserContext";
+import logo from "../assets/speed-logo.png";
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
@@ -77,17 +78,23 @@ const UserLogin = () => {
 
       <div className="p-7 min-h-screen flex flex-col justify-between">
         <div className="flex-1">
-          <img
-            className="w-16 mb-10"
-            src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
-            alt="Uber logo"
-          />
+          <div>
+            <img className="w-12 mb-10" src={logo} alt="Uber logo" />
+          </div>
+          <div className="flex justify-center items-start ">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3">
+              User Login
+            </h1>
+          </div>
 
           <form onSubmit={submitHandle} className="space-y-5">
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                What's Your Email
-              </h3>
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
               <input
                 type="email"
                 required
@@ -96,14 +103,17 @@ const UserLogin = () => {
                 placeholder="email@example.com"
                 autoComplete="username"
                 disabled={isLoading}
-                className="bg-gray-100 rounded-lg px-4 py-3 w-full text-base placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-white rounded-xl px-4 py-3.5 w-full text-base border-2 border-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               />
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                Enter Password
-              </h3>
+             <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Password
+              </label>
               <input
                 type="password"
                 required
@@ -112,7 +122,7 @@ const UserLogin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 disabled={isLoading}
-                className="bg-gray-100 rounded-lg px-4 py-3 w-full text-base placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-white rounded-xl px-4 py-3.5 w-full text-base border-2 border-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               />
             </div>
 
@@ -132,15 +142,18 @@ const UserLogin = () => {
             </button>
           </form>
 
-          <p className="text-center mt-6 text-gray-700">
+          <p className="text-center mt-4 text-gray-700">
             New here?{" "}
-            <Link to="/usersignup" className="text-blue-600 font-medium hover:underline">
+            <Link
+              to="/usersignup"
+              className="text-blue-600 font-medium hover:underline"
+            >
               Create a new account
             </Link>
           </p>
         </div>
 
-        <div className="mt-8">
+        <div className="mb-8">
           <Link
             to="/captainlogin"
             className="bg-[#10b461] flex items-center justify-center text-white rounded-lg px-4 py-3 w-full text-lg font-semibold hover:bg-[#0ea152] transition-all"

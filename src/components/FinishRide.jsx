@@ -3,6 +3,7 @@ import { BsChevronCompactDown } from "react-icons/bs";
 import { IoLocationSharp } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import axios from "../utils/axios";
+import logo from "../assets/speed-logo.png";
 import { useNavigate } from "react-router-dom";
 
 const FinishRide = (props) => {
@@ -48,7 +49,7 @@ const FinishRide = (props) => {
         <div className="flex items-center gap-3 ">
           <img
             className="w-12 h-12 rounded-full object-cover "
-            src="#"
+            src="https://i.pinimg.com/736x/8d/8a/e3/8d8ae3f0dc07cafb4df93ee827049c11.jpg"
             alt=""
           />
           <h2 className="text-lg font-medium">

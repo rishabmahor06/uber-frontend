@@ -140,7 +140,7 @@ const ConfirmRidePopUp = ({
                 setConfirmRidepanelPopUp(false);
                 setOtpPanelOpen(true);
               }}
-              className="w-full mt-5 flex justify-center bg-green-700 hover:bg-green-800 text-white font-semibold p-3 rounded-lg transition-colors"
+              className="w-full mt-5 flex justify-center bg-green-700 hover:bg-green-800 text-white font-semibold p-2 rounded-lg transition-colors"
             >
               Enter OTP to Start
             </button>

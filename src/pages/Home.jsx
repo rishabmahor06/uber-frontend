@@ -13,6 +13,7 @@ import axios from "../utils/axios";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import LiveTracking from "../components/LiveTracking.jsx";
 import logo from "../assets/speed-logo.png";
+import { IoLogOut } from "react-icons/io5";
 
 const Home = () => {
   const [pickup, setPickup] = useState("");
@@ -333,12 +334,13 @@ const Home = () => {
   return (
     <div className="relative h-screen ">
       <div className="flex justify-between items-center absolute w-full px-5 py-5 z-50">
-        <img className="w-10" src={logo} alt="" />
+        <img className="w-10 -mt-3" src={logo} alt="" />
         <button
           onClick={handleLogout}
-          className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+          className="bg-gray-50 p-2 rounded-lg -mt-3 -mr-3 hover:bg-red-100 hover:text-red-500 transition-colors duration-200"
         >
-          Logout
+          
+        <IoLogOut  className="text-3xl"/>
         </button>
       </div>
       <div className="h-screen w-screen">

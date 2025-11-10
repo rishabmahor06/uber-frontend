@@ -11,6 +11,8 @@ import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
 import { SocketContext } from "../context/SocketContext";
 import { CaptainDataContext } from "../context/CaptainContext";
 import logo from "../assets/speed-logo.png";
+import { IoLogOut } from "react-icons/io5";
+
 
 const CaptainHome = () => {
   const [ridePanelPopUp, setRidepanelpoUp] = useState(false);
@@ -24,29 +26,7 @@ const CaptainHome = () => {
   const [isLocationEnabled] = useState(true); // Always enable location tracking
 
   const navigate = useNavigate();
-  // useEffect(() => {
-  //   socket.emit("join", { userId: captain._id, userType: "captain" });
-
-  //   const updateLocation = () => {
-  //     if (navigator.geolocation) {
-  //       navigator.geolocation.getCurrentPosition((position) => {
-  //         console.log({ userId: captain   ._id, location: location });
-
-  //         const location = {
-  //           ltd: position.coords.latitude,
-  //           lng: position.coords.longitude,
-  //         };
-  //         socket.emit("update-location-captain", {
-  //           userId: captain._id,
-  //           location: location,
-  //         });
-  //       });
-  //     }
-  //   };
-
-  //   const locationInterval = setInterval(updateLocation, 10000); // update every 5 seconds
-  //   updateLocation(); // initial call
-  // });
+ 
 
   useEffect(() => {
     if (!captain || !captain._id) return; // Prevent error if captain is not loaded
@@ -351,9 +331,9 @@ const CaptainHome = () => {
               console.error("Logout failed:", error);
             }
           }}
-          className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+          className="bg-gray-50 p-2 rounded-lg   hover:bg-red-100 hover:text-red-500  transition-colors duration-200"
         >
-          Logout
+          <IoLogOut  className="text-3xl"/>
         </button>
       </div>
       <div className="h-3/5">
