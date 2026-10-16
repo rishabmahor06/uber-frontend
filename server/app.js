@@ -7,6 +7,8 @@ const captainRoutes = require("./routes/captain.routes");
 const mapsRoutes = require("./routes/maps.routes");
 const rideRoutes = require("./routes/ride.routes");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+const userModel = require("./models/user.model");
 
 // Connect to MongoDB on startup
 connectToDb().catch((err) => {
@@ -38,6 +40,32 @@ app.use((req, res, next) => {
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Health check for uptime monitors (UptimeRobot etc). Express answers HEAD for GET routes too.
+// It really talks to MongoDB (ping + a tiny read) so the cluster counts it as activity.
+app.get("/api/health", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const started = Date.now();
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error("MongoDB is not connected");
+    }
+    await mongoose.connection.db.admin().ping();
+    await userModel.estimatedDocumentCount();
+    res.status(200).json({
+      status: "ok",
+      database: { status: "up", name: mongoose.connection.name, latencyMs: Date.now() - started },
+      uptimeSeconds: Math.round(process.uptime()),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: "error",
+      database: { status: "down", error: err.message },
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
 
 app.use("/api/users", userRoutes);
 app.use("/api/captain", captainRoutes);
