@@ -10,9 +10,15 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const userModel = require("./models/user.model");
 
-// Connect to MongoDB on startup
-connectToDb().catch((err) => {
-  console.error("Failed to connect to MongoDB:", err);
+// Lazy, cached MongoDB connection: works on serverless hosts (Vercel) where every
+// cold start is a fresh process, and never connects at import / build time.
+app.use(async (req, res, next) => {
+  try {
+    await connectToDb();
+    next();
+  } catch (err) {
+    res.status(503).json({ message: "Database is unavailable. Please try again." });
+  }
 });
 
 // Apply bodyParser for all routes

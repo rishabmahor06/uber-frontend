@@ -1,12 +1,8 @@
 import CredentialsProvider from "next-auth/providers/credentials";
+import authServiceModule from "../../server/services/auth.service";
 
-// server.js publishes the DB-backed auth service on globalThis (same Node process),
-// so credentials are checked straight against MongoDB — no HTTP hop to the API.
-const authService = () => {
-  const svc = globalThis.__speedAuth;
-  if (!svc) throw new Error("Authentication service is not ready. Please try again.");
-  return svc;
-};
+// Credentials are checked straight against MongoDB (no HTTP hop to the API).
+const authService = () => authServiceModule;
 
 function dbProvider(id, name, role) {
   return CredentialsProvider({
