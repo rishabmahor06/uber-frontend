@@ -158,12 +158,23 @@ module.exports.syncCaptain = async (req, res) => {
     const lng = Number(req.body.lng);
     const hasPosition = Number.isFinite(lat) && Number.isFinite(lng);
 
+    // A captain stuck on "on_ride" without a live ride (abandoned / cancelled) would never
+    // see requests again, so free them.
+    let onRide = req.captain.status === "on_ride";
+    if (onRide) {
+      const live = await rideModel.exists({
+        captain: req.captain._id,
+        status: { $in: ["accepted", "ongoing"] },
+      });
+      if (!live) onRide = false;
+    }
+
     const update = { lastSeenAt: new Date() };
     if (hasPosition) update.location = { ltd: lat, lng };
-    if (req.captain.status !== "on_ride") update.status = "available";
+    if (!onRide) update.status = "available";
     await captainModel.updateOne({ _id: req.captain._id }, update);
 
-    const busy = req.captain.status === "on_ride";
+    const busy = onRide;
     const requests = busy
       ? []
       : (await rideService.pendingRidesFor(req.captain, hasPosition ? { lat, lng } : null)).map(
