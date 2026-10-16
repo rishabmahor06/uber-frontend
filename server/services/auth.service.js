@@ -1,6 +1,7 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const userModel = require("../models/user.model");
 const captainModel = require("../models/captain.model");
+const { connectToDb } = require("../db/db");
 
 const MODELS = { user: userModel, captain: captainModel };
 
@@ -9,6 +10,8 @@ const MODELS = { user: userModel, captain: captainModel };
 module.exports.verifyCredentials = async (role, rawEmail, password) => {
   const model = MODELS[role];
   if (!model) throw new Error("Unknown account type");
+
+  await connectToDb();
 
   const email = String(rawEmail || "").trim().toLowerCase();
   if (!email || !password) throw new Error("Email and password are required");

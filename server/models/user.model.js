@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const userSchema = new mongoose.Schema({
@@ -28,9 +28,6 @@ const userSchema = new mongoose.Schema({
     required: true,
     select: false,
   },
-  socketId: {
-    type: String,
-  },
 });
 
 userSchema.methods.generateAuthToken = function () {
@@ -51,6 +48,7 @@ userSchema.statics.hashPassword = async function (password) {
 };
 
 // Use singular capitalized model name so it matches refs across schemas
-const userModel = mongoose.model("User", userSchema);
+// idempotent: Next.js may evaluate this file in more than one bundle
+const userModel = mongoose.models.User || mongoose.model("User", userSchema);
 
 module.exports = userModel;

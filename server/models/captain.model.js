@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const captainSchema = new mongoose.Schema({
@@ -27,8 +27,9 @@ const captainSchema = new mongoose.Schema({
     required: true,
     select: false,
   },
-  socketId: {
-    type: String,
+  // last time the captain app polled /api/captain/sync (online = recent)
+  lastSeenAt: {
+    type: Date,
   },
   status: {
     type: String,
@@ -83,6 +84,7 @@ captainSchema.statics.hashPassword = async function (password) {
 };
 
 // Register as 'Captain' so refs can use 'Captain'
-const captainModel = mongoose.model("Captain", captainSchema);
+const captainModel =
+  mongoose.models.Captain || mongoose.model("Captain", captainSchema);
 
 module.exports = captainModel;
