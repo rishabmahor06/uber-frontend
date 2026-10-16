@@ -1,78 +1,72 @@
+"use client";
 import React from "react";
-import { BsChevronCompactDown } from "react-icons/bs";
-import { IoLocationSharp } from "react-icons/io5";
+import { FaPhoneAlt } from "react-icons/fa";
+import TripLine from "./TripLine";
+import { vehicleMeta, fmtKm, fmtMin } from "../lib/maps";
 
-const WaitingForDriver = (props) => {
-  // Safely extract captain and vehicle info
-  const captain = props.ride?.captain || {};
-  const fullname = captain.fullname || {};
-  const firstName = fullname.firstname || "";
-  const lastName = fullname.lastname || "";
-  const displayName = (firstName + " " + lastName).trim() || "Captain";
+// Captain accepted: show who is coming, the OTP and live ETA.
+const WaitingForDriver = ({ ride, leg, onCancel, cancelling }) => {
+  const captain = ride.captain || {};
+  const name =
+    [captain.fullname?.firstname, captain.fullname?.lastname]
+      .filter(Boolean)
+      .join(" ") || "Your captain";
   const vehicle = captain.vehicle || {};
-  const plate = vehicle.plate || "";
+  const v = vehicleMeta(vehicle.vehicleType || ride.vehicleType);
 
   return (
     <div>
-      <h6
-        onClick={() => {
-          props.waitingForDriver(false);
-        }}
-        className="p-1 text-center w-[93%] absolute top-0 left-44"
-      >
-        <BsChevronCompactDown className="text-2xl text-gray-500" />
-      </h6>
+      <div className="mb-4 rounded-2xl bg-brand-navy p-4 text-white">
+        <p className="text-sm text-white/70">
+          {leg
+            ? `Arriving in ${fmtMin(leg.duration.value)} · ${fmtKm(
+                leg.distance.value
+              )} away`
+            : "Your captain is on the way"}
+        </p>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-semibold capitalize">{name}</p>
+            <p className="text-sm text-white/80">
+              {v.name}
+              {vehicle.color ? ` · ${vehicle.color}` : ""}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="rounded-lg bg-white px-3 py-1 text-base font-bold uppercase tracking-wider text-brand-navy">
+              {vehicle.plate || "—"}
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <div className=" flex gap-2 justify-between items-center">
-        <img
-          className="h-12"
-          src="https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,h_368,w_552/v1743773253/assets/5e/8ce23d-35fa-425d-a7d2-08a2826d04bc/original/UberBlackXL.png"
-          alt=""
-        />{" "}
-        <div className="text-right">
-          <h2 className="text-lg font-medium">{displayName}</h2>
-          <h4 className="font-semibold -mt-1 -mb-1">{plate}</h4>
-          <p className="text-sm text-gray-600">TVS NTORQ</p>
-          <h2 className="text-lg font-semibold">{props.ride?.otp}</h2>
+      <div className="mb-4 flex items-center justify-between rounded-xl border-2 border-dashed border-brand-lime px-4 py-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            Share OTP with captain
+          </p>
+          <p className="font-mono text-3xl font-bold tracking-[0.3em]">{ride.otp}</p>
         </div>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-mint text-brand-forest">
+          <FaPhoneAlt />
+        </span>
       </div>
-      <div className="w-full mt-5">
-        <div>
-          <div className="flex gap-5 items-center border-b-2 p-3 border-gray-200">
-            <IoLocationSharp className="text-xl" />
-            <div>
-              <h3 className="text-lg font-medium">562/11</h3>
-              <p className="text-sm -mt-1 text-gray-600">
-                {props.ride?.pickup}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div>
-            <div className="flex gap-5 items-center border-b-2 p-3 border-gray-200">
-              <IoLocationSharp className="text-xl" />
-              <div>
-                <h3 className="text-lg font-medium">562/11</h3>
-                <p className="text-sm -mt-1 text-gray-600">
-                  {props.ride?.destination}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div>
-            <div className="flex gap-5 items-center p-3">
-              <IoLocationSharp className="text-xl" />
-              <div>
-                <h3 className="text-lg font-medium">{props.ride?.fare}</h3>
-                <p className="text-sm -mt-1 text-gray-600">cash cash</p>
-              </div>
-            </div>
-          </div>
-        </div>
+
+      <TripLine pickup={ride.pickup} destination={ride.destination} />
+
+      <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+        <span className="text-sm text-gray-600">Pay by cash</span>
+        <span className="text-lg font-bold">₹{ride.fare}</span>
       </div>
+
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={cancelling}
+        className="mt-4 w-full rounded-xl border-2 border-red-200 py-3 font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+      >
+        {cancelling ? "Cancelling…" : "Cancel ride"}
+      </button>
     </div>
   );
 };
