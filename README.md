@@ -1,16 +1,54 @@
-# React + Vite
+# Speed — Cab Booking App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Full-stack ride booking app: **Next.js 14** (App Router) UI, an **Express** API and **Socket.IO**
+all running in a single Node process (`server.js`), with **MongoDB** (Mongoose) and **NextAuth** for sessions.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Landing page with *Request a ride* (OpenStreetMap map, live place suggestions, route preview)
+- Prices page: fare per vehicle (Bike / Auto / Car) from real road distance, then log in to book
+- Rider app: current location, route line, vehicle selection, live driver tracking, OTP-protected rides
+- Captain app: go online, receive ride requests over Socket.IO, accept, OTP start, live location, finish
+- Separate rider / captain authentication (NextAuth credentials), account re-verified against MongoDB on every request
+- `GET /api/health` — pings MongoDB (use it with UptimeRobot to keep Atlas awake)
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer | Tech |
+| --- | --- |
+| UI | Next.js 14, React 18, Tailwind CSS, Leaflet / OpenStreetMap |
+| API | Express 5, express-validator, JWT, bcrypt |
+| Realtime | Socket.IO |
+| Data | MongoDB + Mongoose |
+| Maps | Photon + Nominatim (search), OSRM (routing) — no API key needed |
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev                  # http://localhost:3000
+```
+
+Production:
+
+```bash
+npm run build
+npm start
+```
+
+> Socket.IO needs a long-running server, so deploy to a Node host (Render, Railway, EC2, VPS) — not serverless.
+
+## Project layout
+
+```
+app/        Next.js routes (App Router) and NextAuth handler
+src/        Views, components, hooks, contexts, helpers
+server/     Express app: models, controllers, routes, services, Socket.IO
+server.js   Custom server: Next + Express (/api/*) + Socket.IO (/socket.io)
+```
+
+## Notes
+
+- The public OSM services are for development / light use; use your own geocoding & routing for production.
+- All data is stored in the `uber` database (`MONGO_DB`).
