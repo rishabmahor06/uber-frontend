@@ -1,71 +1,62 @@
-import React, { useContext, useEffect } from "react";
-import { CaptainDataContext } from "../context/CaptainContext";
+"use client";
+import React from "react";
+import { vehicleMeta } from "../lib/maps";
 
-const CaptainDetails = () => {
-  const { captain, setCaptain } = useContext(CaptainDataContext);
-  
-
-  console.log("CaptainDetails render:", { captain });
-
-  // Try to get captain from localStorage if context is empty
-  useEffect(() => {
-    if (!captain) {
-      const storedCaptain = localStorage.getItem("captain");
-      if (storedCaptain) {
-        try {
-          const parsedCaptain = JSON.parse(storedCaptain);
-          setCaptain(parsedCaptain);
-        } catch (err) {
-          console.error("Failed to parse stored captain data:", err);
-        }
-      }
-    }
-  }, [captain, setCaptain]);
-
-  // Always prepare display values, falling back to placeholders 
-  const firstName = captain?.fullname?.firstname || "";
-  const lastName = captain?.fullname?.lastname || "";
-  const displayName = (firstName + " " + lastName).trim() || "Captain";
-  const avatar =
-    captain?.avatar ||
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0kSjTb8XolsShk0Ab50yKigE_YWh6EFy8Vw&s";
-
-  // Show skeleton UI while loading but keep t
-  const isLoading = !captain;
+// Idle captain card: who is online and how they're doing.
+const CaptainDetails = ({ captain, locationError, hasLocation }) => {
+  const name =
+    [captain?.fullname?.firstname, captain?.fullname?.lastname]
+      .filter(Boolean)
+      .join(" ") || "Captain";
+  const vehicle = captain?.vehicle || {};
+  const v = vehicleMeta(vehicle.vehicleType);
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center justify-start gap-2 ">
-          <img
-            className="h-10 w-10 rounded-full object-cover"
-            src={avatar}
-            alt={displayName}
-          />
-          <h4 className="text-lg font-medium capitalize ">{displayName}</h4>
-        </div>
-        <div>
-          <h4 className="text-xl font-semibold ">$298.36</h4>
-          <p className="text-sm font-medium text-gray-600">Earned</p>
-        </div>
-      </div>
-      <div className="flex p-3 mt-8 bg-gray-100 rounded-xl justify-center gap-5 items-start">
-        <div className="text-center">
-          <i>time</i>
-          <h5 className="text-3xl mb-2 font-medium ">10.2 </h5>
-          <p className="text-sm text-gray-600">hours online</p>
-        </div>
-        <div className="text-center">
-          <i>speed</i>
-          <h5 className="text-3xl mb-2 font-medium ">10.2 </h5>
-          <p className="text-sm text-gray-600">hours online</p>
-        </div>
-        <div className="text-center">
-          <i>notes</i>
-          <h5 className="text-3xl mb-2 font-medium ">10.2 </h5>
-          <p className="text-sm text-gray-600">hours online</p>
+      <div className="flex items-center gap-3">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-navy text-2xl text-white">
+          {name[0]?.toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <h3 className="truncate text-xl font-semibold capitalize">{name}</h3>
+          <p className="flex items-center gap-2 text-sm text-gray-500">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+            </span>
+            Online · waiting for ride requests
+          </p>
         </div>
       </div>
+
+      <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-xl bg-gray-50 p-3">
+          <p className="text-2xl">{v.icon}</p>
+          <p className="mt-1 text-xs text-gray-500">{v.name}</p>
+        </div>
+        <div className="rounded-xl bg-gray-50 p-3">
+          <p className="truncate text-sm font-bold uppercase">
+            {vehicle.plate || "—"}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">Plate</p>
+        </div>
+        <div className="rounded-xl bg-gray-50 p-3">
+          <p className="truncate text-sm font-bold capitalize">
+            {vehicle.color || "—"}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">Colour</p>
+        </div>
+      </div>
+
+      <p
+        className={`mt-4 rounded-xl p-3 text-sm ${
+          hasLocation ? "bg-brand-mint text-brand-forest" : "bg-amber-50 text-amber-700"
+        }`}
+      >
+        {hasLocation
+          ? "Your live location is being shared so nearby riders can find you."
+          : locationError || "Getting your location… please allow location access."}
+      </p>
     </div>
   );
 };

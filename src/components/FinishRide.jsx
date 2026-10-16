@@ -1,112 +1,43 @@
+"use client";
 import React from "react";
-import { BsChevronCompactDown } from "react-icons/bs";
-import { IoLocationSharp } from "react-icons/io5";
-import { Link } from "react-router-dom";
-import axios from "../utils/axios";
-import logo from "../assets/speed-logo.png";
-import { useNavigate } from "react-router-dom";
+import TripLine from "./TripLine";
+import { fmtKm, fmtMin } from "../lib/maps";
 
-const FinishRide = (props) => {
-  const navigate = useNavigate();
-  const endRide = async () => {
-    try {
-      const response = await axios.post(
-        "/ride/end-ride",
-        {
-          rideId: props.ride._id,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      if (response.status === 200) {
-        // props.setFinishRidePanel(false);
-        // props.setRidepanelpoUp(false);
-        navigate("/captain-home");
-      }
-    } catch (error) {
-      console.error("Error ending ride:", error);
-    }
-  };
-
+// Captain view while the trip is ongoing.
+const FinishRide = ({ ride, leg, onFinish, finishing }) => {
+  const rider = [ride.user?.fullname?.firstname, ride.user?.fullname?.lastname]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div>
-      <h6
-        onClick={() => {
-          props.setFinishRidePanel(false);
-        }}
-        className="p-1 text-center w-[93%] absolute top-0 left-44"
+      <div className="mb-4 rounded-2xl bg-brand-forest p-4 text-white">
+        <p className="flex items-center gap-2 text-sm text-white/70">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-brand-lime" />
+          Trip in progress
+        </p>
+        <p className="mt-1 text-2xl font-bold">
+          {leg ? `${fmtMin(leg.duration.value)} to drop-off` : "Drive to the destination"}
+        </p>
+        {leg && <p className="text-sm text-white/80">{fmtKm(leg.distance.value)} left</p>}
+      </div>
+
+      <TripLine pickup={ride.pickup} destination={ride.destination} />
+
+      <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+        <span className="text-sm capitalize text-gray-600">
+          Collect cash from {rider || "rider"}
+        </span>
+        <span className="text-lg font-bold">₹{ride.fare}</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={onFinish}
+        disabled={finishing}
+        className="mt-4 w-full rounded-xl bg-brand-navy py-3.5 font-semibold text-white hover:bg-black disabled:opacity-60"
       >
-        <BsChevronCompactDown className="text-2xl text-gray-500" />
-      </h6>
-
-      <h3 className="text-2xl font-semibold mb-5 ">finish this ride</h3>
-
-      <div className="flex items-center justify-between  p-3 bg-yellow-400 rounded-lg mt-4">
-        <div className="flex items-center gap-3 ">
-          <img
-            className="w-12 h-12 rounded-full object-cover "
-            src="https://i.pinimg.com/736x/8d/8a/e3/8d8ae3f0dc07cafb4df93ee827049c11.jpg"
-            alt=""
-          />
-          <h2 className="text-lg font-medium">
-            {props.ride?.user.fullname.firstname}
-          </h2>
-        </div>
-        <h5 className="text-lg font-semibold">2.2 km </h5>
-      </div>
-
-      <div className=" flex gap-2 justify-between flex-col items-center"></div>
-      <div className="w-full mt-5">
-        <div>
-          <div className="flex gap-5 items-center border-b-2 p-3 border-gray-200">
-            <IoLocationSharp className="text-xl" />
-            <div>
-              <h3 className="text-lg font-medium">562/11</h3>
-              <p className="text-sm -mt-1 text-gray-600">
-                {props.ride?.pickup}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div>
-            <div className="flex gap-5 items-center border-b-2 p-3 border-gray-200">
-              <IoLocationSharp className="text-xl" />
-              <div>
-                <h3 className="text-lg font-medium">562/11</h3>
-                <p className="text-sm -mt-1 text-gray-600">
-                  {props.ride?.destination}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div>
-            <div className="flex gap-5 items-center p-3">
-              <IoLocationSharp className="text-xl" />
-              <div>
-                <h3 className="text-lg font-medium">{props.ride?.fare}</h3>
-                <p className="text-sm -mt-1 text-gray-600">cash cash</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-8  mb-5">
-          <div className="flex gap-5 justify-between">
-            <button
-              onClick={endRide}
-              className="w-full mt-5 flex text-lg justify-center bg-green-700 text-white font-semibold p-3 rounded-lg "
-            >
-              finish ride
-            </button>
-          </div>
-        </div>
-      </div>
+        {finishing ? "Finishing…" : "Finish ride"}
+      </button>
     </div>
   );
 };

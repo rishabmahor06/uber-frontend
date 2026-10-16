@@ -1,162 +1,58 @@
+"use client";
 import React from "react";
-import PropTypes from "prop-types";
-import { BsChevronCompactDown } from "react-icons/bs";
-import { IoLocationSharp } from "react-icons/io5";
+import TripLine from "./TripLine";
+import { fmtKm, fmtMin } from "../lib/maps";
 
-const defaultRide = {
-  user: {
-    fullname: {
-      firstname: "",
-      lastname: "",
-    },
-  },
-  pickup: "",
-  destination: "",
-  fare: 0,
-  distance: 0,
-};
-
-const RidePopUp = ({
-  ride = defaultRide,
-  setRidepanelpoUp,
-  setConfirmRidepanelPopUp,
-  confirmRide,
-}) => {
+// Incoming ride request shown to the captain.
+const RidePopUp = ({ ride, pickupKm, queued, onAccept, onIgnore, accepting }) => {
+  const rider = [ride.user?.fullname?.firstname, ride.user?.fullname?.lastname]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div>
-      <h6
-        onClick={() => {
-          setRidepanelpoUp(false);
-        }}
-        className="p-1 text-center w-[93%] absolute top-0 left-44 cursor-pointer"
-      >
-        <BsChevronCompactDown className="text-2xl text-gray-500" />
-      </h6>
-
-      <h3 className="text-2xl font-semibold mb-5 ">New Ride</h3>
-
-      <div className="flex items-center justify-between  p-3 bg-yellow-400 rounded-lg mt-4">
-        <div className="flex items-center gap-3 ">
-          <img
-            className="w-12 h-12 rounded-full object-cover "
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0kSjTb8XolsShk0Ab50yKigE_YWh6EFy8Vw&s"
-            alt="User"
-          />
-          <h2 className="text-lg font-medium">
-            {ride?.user?.fullname
-              ? `${ride.user.fullname.firstname || ""} ${
-                  ride.user.fullname.lastname || ""
-                }`.trim()
-              : "User"}
-          </h2>
-        </div>
-        <h5 className="text-lg font-semibold">
-          {ride?.distance ? `${ride.distance} km` : ""}
-        </h5>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-xl font-semibold">New ride request</h3>
+        {queued > 0 && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+            +{queued} more
+          </span>
+        )}
       </div>
 
-      <div className=" flex gap-2 justify-between flex-col items-center"></div>
-      <div className="w-full mt-5">
-        <div>
-          <div className="flex gap-5 items-center border-b-2 p-3 border-gray-200">
-            <IoLocationSharp className="text-xl" />
-            <div>
-              <h3 className="text-lg font-medium">Pickup Location</h3>
-              <p className="text-sm -mt-1 text-gray-600">
-                {ride?.pickup || "Loading..."}
-              </p>
-            </div>
-          </div>
+      <div className="mb-4 flex items-center justify-between rounded-2xl bg-brand-navy p-4 text-white">
+        <div className="min-w-0">
+          <p className="truncate font-semibold capitalize">{rider || "Rider"}</p>
+          <p className="text-sm text-white/70">
+            {pickupKm != null ? `${pickupKm.toFixed(1)} km to pickup · ` : ""}
+            {ride.distance ? fmtKm(ride.distance) : ""}
+            {ride.duration ? ` · ${fmtMin(ride.duration)}` : ""}
+          </p>
         </div>
-        <div>
-          <div>
-            <div className="flex gap-5 items-center border-b-2 p-3 border-gray-200">
-              <IoLocationSharp className="text-xl" />
-              <div>
-                <h3 className="text-lg font-medium">Drop Location</h3>
-                <p className="text-sm -mt-1 text-gray-600">
-                  {ride?.destination || "Loading..."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div>
-            <div className="flex gap-5 items-center p-3">
-              <IoLocationSharp className="text-xl" />
-              <div>
-                <h3 className="text-lg font-medium">₹{ride?.fare || "0"}</h3>
-                <p className="text-sm -mt-1 text-gray-600">Cash Payment</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-5 justify-between ">
-          <button
-            onClick={() => setRidepanelpoUp(false)}
-            className="w-full mt-5 bg-gray-400 text-gray-800 font-semibold p-2 rounded-lg hover:bg-gray-500 transition-colors"
-          >
-            Cancle
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                // Check if captain token exists before attempting to confirm
-                const captainToken = localStorage.getItem("captainToken");
-                if (!captainToken) {
-                  alert("Please log in again as a captain to accept rides.");
-                  return;
-                }
+        <p className="text-2xl font-extrabold text-brand-lime">₹{ride.fare}</p>
+      </div>
 
-                await confirmRide();
-                setConfirmRidepanelPopUp(true);
-              } catch (error) {
-                console.error("Ride confirmation failed:", error);
+      <TripLine pickup={ride.pickup} destination={ride.destination} />
 
-                // Show user-friendly error message
-                const errorMessage = error.message.includes("token")
-                  ? "Please log in again as a captain to accept rides."
-                  : error.message ||
-                    "Failed to confirm ride. Please try again.";
-
-                alert(errorMessage);
-
-                // If it's an authentication error, we might want to redirect to login
-                if (
-                  error.message.includes("token") ||
-                  error.message.includes("authentication")
-                ) {
-                  window.location.href = "/captainlogin";
-                }
-              }
-            }}
-            className="w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Accept
-          </button>
-        </div>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={onIgnore}
+          disabled={accepting}
+          className="rounded-xl border-2 border-gray-200 py-3 font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Ignore
+        </button>
+        <button
+          type="button"
+          onClick={onAccept}
+          disabled={accepting}
+          className="rounded-xl bg-brand-lime py-3 font-bold text-brand-navy hover:bg-brand-limeDark disabled:opacity-60"
+        >
+          {accepting ? "Accepting…" : "Accept"}
+        </button>
       </div>
     </div>
   );
-};
-
-RidePopUp.propTypes = {
-  ride: PropTypes.shape({
-    user: PropTypes.shape({
-      fullname: PropTypes.shape({
-        firstname: PropTypes.string,
-        lastname: PropTypes.string,
-      }),
-    }),
-    pickup: PropTypes.string,
-    destination: PropTypes.string,
-    fare: PropTypes.number,
-    distance: PropTypes.number,
-  }),
-  setRidepanelpoUp: PropTypes.func.isRequired,
-  setConfirmRidepanelPopUp: PropTypes.func.isRequired,
-  confirmRide: PropTypes.func.isRequired,
 };
 
 export default RidePopUp;
