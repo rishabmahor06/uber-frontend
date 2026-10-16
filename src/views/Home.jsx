@@ -4,7 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "@/lib/router";
 import axios from "../utils/axios";
 import { UserDataContext } from "../context/UserContext.jsx";
-import useSocketJoin from "../hooks/useSocketJoin";
+import usePolling from "../hooks/usePolling";
 import useGeolocation from "../hooks/useGeolocation";
 import {
   apiError,
@@ -27,7 +27,6 @@ const pt = (c) => (c ? { lat: c.lat, lng: c.lng } : null);
 const Home = () => {
   const navigate = useNavigate();
   const { user, logout } = useContext(UserDataContext);
-  const socket = useSocketJoin(user?._id, "user");
   const { position: me } = useGeolocation();
 
   const [step, setStep] = useState("search");
@@ -175,43 +174,44 @@ const Home = () => {
     if (d) setAutoQuote(true);
   };
 
-  /* ---------- socket events ---------- */
-  useEffect(() => {
-    if (!socket) return;
-    const onConfirmed = (data) => {
-      setRide(data);
-      setStep("assigned");
-      lastLegFrom.current = null;
-      if (data.captain?.location?.ltd != null) {
-        setDriver({ lat: data.captain.location.ltd, lng: data.captain.location.lng });
-      }
-      toast.success("Captain found!");
-    };
-    const onStarted = (data) => {
-      setRide((r) => ({ ...r, ...data }));
-      setStep("riding");
-      lastLegFrom.current = null;
-      setLeg(null);
-      toast.success("Ride started");
-    };
-    const onEnded = (data) => {
-      setRide((r) => ({ ...r, ...data }));
-      setStep("completed");
-      setLeg(null);
-    };
-    const onLocation = (data) => setDriver({ lat: data.lat, lng: data.lng });
+  /* ---------- live ride status: polling (works on serverless hosts, no websockets) ---------- */
+  const stepRef = useRef(step);
+  stepRef.current = step;
 
-    socket.on("ride-confirmed", onConfirmed);
-    socket.on("ride-started", onStarted);
-    socket.on("ride-ended", onEnded);
-    socket.on("captain-location", onLocation);
-    return () => {
-      socket.off("ride-confirmed", onConfirmed);
-      socket.off("ride-started", onStarted);
-      socket.off("ride-ended", onEnded);
-      socket.off("captain-location", onLocation);
-    };
-  }, [socket]);
+  usePolling(
+    async () => {
+      const { data: r } = await axios.get(`/ride/${ride._id}`);
+      const current = stepRef.current;
+
+      if (r.captain?.location?.ltd != null) {
+        setDriver({ lat: r.captain.location.ltd, lng: r.captain.location.lng });
+      }
+
+      if (r.status === "completed") {
+        setRide((old) => ({ ...old, ...r }));
+        setStep("completed");
+        setLeg(null);
+      } else if (r.status === "ongoing" && current !== "riding") {
+        setRide((old) => ({ ...old, ...r }));
+        setStep("riding");
+        lastLegFrom.current = null;
+        setLeg(null);
+        toast.success("Ride started");
+      } else if (r.status === "accepted" && current === "searching") {
+        setRide((old) => ({ ...old, ...r }));
+        setStep("assigned");
+        lastLegFrom.current = null;
+        toast.success("Captain found!");
+      } else if (r.status === "cancelled") {
+        setRide(null);
+        setDriver(null);
+        setLeg(null);
+        setStep("search");
+      }
+    },
+    2500,
+    !!ride?._id && ["searching", "assigned", "riding"].includes(step)
+  );
 
   /* ---------- live leg: driver -> pickup (assigned) / destination (riding) ---------- */
   useEffect(() => {

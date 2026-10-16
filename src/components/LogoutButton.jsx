@@ -1,15 +1,9 @@
 "use client";
-import React, { useContext } from "react";
+import React from "react";
 import { signOut } from "next-auth/react";
-import { SocketContext } from "../context/SocketContext";
 
 const LogoutButton = ({ userType = "user" }) => {
-  const { socket } = useContext(SocketContext);
-
   const handleLogout = () => {
-    if (socket) {
-      socket.disconnect();
-    }
     signOut({
       callbackUrl: userType === "user" ? "/userlogin" : "/captainlogin",
     });

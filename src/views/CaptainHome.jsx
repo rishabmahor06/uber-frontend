@@ -4,7 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "@/lib/router";
 import axios from "../utils/axios";
 import { CaptainDataContext } from "../context/CaptainContext";
-import useSocketJoin from "../hooks/useSocketJoin";
+import usePolling from "../hooks/usePolling";
 import useGeolocation from "../hooks/useGeolocation";
 import { apiError, getRoute, haversineKm } from "../lib/maps";
 import RideLayout from "../components/RideLayout";
@@ -21,7 +21,6 @@ const pt = (c) => (c ? { lat: c.lat, lng: c.lng } : null);
 const CaptainHome = () => {
   const navigate = useNavigate();
   const { captain, logout } = useContext(CaptainDataContext);
-  const socket = useSocketJoin(captain?._id, "captain");
   const { position: me, error: locError } = useGeolocation();
 
   const [requests, setRequests] = useState([]);
@@ -31,12 +30,10 @@ const CaptainHome = () => {
   const [leg, setLeg] = useState(null); // captain -> pickup / destination
   const [busy, setBusy] = useState(false);
 
-  const lastSent = useRef(0);
   const lastLegFrom = useRef(null);
 
   const handleLogout = async () => {
     try {
-      socket?.emit("leave", { userId: captain?._id, userType: "captain" });
       await logout();
     } catch (e) {
       console.error("Logout failed:", e);
@@ -66,53 +63,48 @@ const CaptainHome = () => {
     };
   }, [captain?._id]);
 
-  /* ---------- share live location (relayed to the rider during a ride) ---------- */
-  useEffect(() => {
-    if (!socket || !me || !captain?._id) return;
-    const now = Date.now();
-    if (now - lastSent.current < 3000) return;
-    lastSent.current = now;
-    socket.emit("update-location-captain", {
-      userId: captain._id,
-      location: { lat: me.lat, lng: me.lng },
-      rideId: ride && ["pickup", "riding"].includes(step) ? ride._id : undefined,
-    });
-  }, [me, socket, captain?._id, ride, step]);
+  /* ---------- heartbeat (polling, no websockets): live location + open requests + ride status ---------- */
+  const meRef = useRef(me);
+  meRef.current = me;
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  const rideRef = useRef(ride);
+  rideRef.current = ride;
+  const ignored = useRef(new Set());
+  const seen = useRef(new Set());
 
-  /* ---------- socket events ---------- */
-  useEffect(() => {
-    if (!socket) return;
-    const onNew = (data) => {
-      setRequests((list) =>
-        list.some((r) => r._id === data._id) ? list : [...list, data]
-      );
-      try {
-        navigator.vibrate?.([200, 100, 200]);
-      } catch {}
-    };
-    const onTaken = ({ rideId }) =>
-      setRequests((list) => list.filter((r) => r._id !== rideId));
-    const onCancelled = ({ rideId }) => {
-      setRide((current) => {
-        if (current && current._id === rideId) {
-          toast.error("The rider cancelled this ride");
-          setStep("idle");
-          setTrip(null);
-          setLeg(null);
-          return null;
-        }
-        return current;
+  usePolling(
+    async () => {
+      const pos = meRef.current;
+      const current = rideRef.current;
+      const onRide = current && ["pickup", "riding"].includes(stepRef.current);
+
+      const { data } = await axios.post("/captain/sync", {
+        lat: pos?.lat,
+        lng: pos?.lng,
+        rideId: onRide ? current._id : undefined,
       });
-    };
-    socket.on("new-ride", onNew);
-    socket.on("ride-taken", onTaken);
-    socket.on("ride-cancelled", onCancelled);
-    return () => {
-      socket.off("new-ride", onNew);
-      socket.off("ride-taken", onTaken);
-      socket.off("ride-cancelled", onCancelled);
-    };
-  }, [socket]);
+
+      const open = (data.requests || []).filter((r) => !ignored.current.has(r._id));
+      if (open.some((r) => !seen.current.has(r._id))) {
+        try {
+          navigator.vibrate?.([200, 100, 200]);
+        } catch {}
+      }
+      open.forEach((r) => seen.current.add(r._id));
+      setRequests(open);
+
+      if (onRide && data.ride?.status === "cancelled") {
+        toast.error("The rider cancelled this ride");
+        setRide(null);
+        setStep("idle");
+        setTrip(null);
+        setLeg(null);
+      }
+    },
+    3000,
+    !!captain?._id
+  );
 
   /* ---------- live leg: me -> pickup / destination ---------- */
   useEffect(() => {
@@ -145,6 +137,7 @@ const CaptainHome = () => {
       toast.success("Ride accepted — head to the pickup");
     } catch (err) {
       toast.error(apiError(err, "Couldn't accept this ride"));
+      ignored.current.add(r._id);
       setRequests((list) => list.filter((x) => x._id !== r._id));
     } finally {
       setBusy(false);
@@ -253,9 +246,10 @@ const CaptainHome = () => {
           queued={requests.length - 1}
           accepting={busy}
           onAccept={() => accept(request)}
-          onIgnore={() =>
-            setRequests((list) => list.filter((r) => r._id !== request._id))
-          }
+          onIgnore={() => {
+            ignored.current.add(request._id);
+            setRequests((list) => list.filter((r) => r._id !== request._id));
+          }}
         />
       )}
 
