@@ -37,7 +37,19 @@ npm run build
 npm start
 ```
 
-> Socket.IO needs a long-running server, so deploy to a Node host (Render, Railway, EC2, VPS) — not serverless.
+## Deploy
+
+This app is **one long-running Node process** (`server.js`: Next.js + Express `/api/*` + Socket.IO).
+It **cannot run on Vercel** — Vercel only runs Next.js serverless functions, so the Express API returns 404 and WebSockets are not supported.
+Deploy to an always-on Node host such as **Render**, Railway, Fly.io or a VPS.
+
+**Render (Blueprint)**
+
+1. Push this repo to GitHub, then Render → *New* → *Blueprint* → pick the repo (it reads `render.yaml`).
+2. Set the environment variables: `MONGO_URI` (Atlas string) and `NEXTAUTH_URL` (`https://<service>.onrender.com`).
+   `MONGO_DB`, `JWT_SECRET_KEY` and `NEXTAUTH_SECRET` are filled in by the blueprint.
+3. In MongoDB Atlas → *Network Access*, allow the host (`0.0.0.0/0` for Render free tier).
+4. Add an UptimeRobot monitor on `https://<service>.onrender.com/api/health` (every 5 min) — keeps Render and Atlas awake.
 
 ## Project layout
 
