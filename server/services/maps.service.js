@@ -160,9 +160,13 @@ module.exports.haversineKm = (a, b) => {
   return 2 * R * Math.asin(Math.sqrt(h));
 };
 
+// A captain counts as online while the captain app keeps polling /api/captain/sync.
+const ONLINE_WINDOW_MS = 30 * 1000;
+module.exports.ONLINE_WINDOW_MS = ONLINE_WINDOW_MS;
+
 module.exports.getAvailableCaptains = async (vehicleType) =>
   captainModel.find({
     status: "available",
     "vehicle.vehicleType": vehicleType,
-    socketId: { $exists: true, $ne: null },
+    lastSeenAt: { $gte: new Date(Date.now() - ONLINE_WINDOW_MS) },
   });

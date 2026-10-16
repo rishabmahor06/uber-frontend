@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { body, query } = require("express-validator");
+const { body, query, param } = require("express-validator");
 const rideController = require("../controllers/ride.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
@@ -87,6 +87,14 @@ router.get(
   "/active-captain",
   authMiddleware.authCaptain,
   rideController.activeRideCaptain
+);
+
+// keep last: a catch-all id route would otherwise shadow /active, /estimate ...
+router.get(
+  "/:id",
+  authMiddleware.authUser,
+  param("id").isMongoId().withMessage("invalid ride id"),
+  rideController.getRideForUser
 );
 
 module.exports = router;

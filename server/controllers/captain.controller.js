@@ -2,7 +2,7 @@ const blacklistTokenModel = require("../models/blacklistToken.model");
 const captainModel = require("../models/captain.model");
 const captainService = require("../services/captain.service");
 const { validationResult } = require("express-validator");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 module.exports.registerCaptain = async (req, res, next) => {
   const error = validationResult(req);
@@ -136,7 +136,51 @@ module.exports.logoutCaptain = async (req, res, next) => {
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
   await blacklistTokenModel.create({ token });
+  await captainModel.updateOne(
+    { _id: req.captain._id, status: { $ne: "on_ride" } },
+    { status: "unavailable" }
+  );
 
   res.clearCookie("token");
   res.status(200).json({ message: "Logout successfully" });
+};
+
+// Captain app heartbeat (every few seconds). Replaces websockets so it runs on Vercel:
+// stores live location + "online" timestamp, returns open ride requests and the
+// status of the ride the captain is currently handling.
+module.exports.syncCaptain = async (req, res) => {
+  try {
+    const rideService = require("../services/ride.service");
+    const rideModel = require("../models/ride.model");
+    const { withoutOtp } = require("./ride.controller");
+
+    const lat = Number(req.body.lat);
+    const lng = Number(req.body.lng);
+    const hasPosition = Number.isFinite(lat) && Number.isFinite(lng);
+
+    const update = { lastSeenAt: new Date() };
+    if (hasPosition) update.location = { ltd: lat, lng };
+    if (req.captain.status !== "on_ride") update.status = "available";
+    await captainModel.updateOne({ _id: req.captain._id }, update);
+
+    const busy = req.captain.status === "on_ride";
+    const requests = busy
+      ? []
+      : (await rideService.pendingRidesFor(req.captain, hasPosition ? { lat, lng } : null)).map(
+          (r) => withoutOtp(r)
+        );
+
+    let ride = null;
+    if (req.body.rideId) {
+      const found = await rideModel
+        .findOne({ _id: req.body.rideId, captain: req.captain._id })
+        .populate("user");
+      ride = found ? withoutOtp(found) : null;
+    }
+
+    res.status(200).json({ requests, ride });
+  } catch (error) {
+    console.error("Captain sync error:", error);
+    res.status(500).json({ message: "Could not sync" });
+  }
 };

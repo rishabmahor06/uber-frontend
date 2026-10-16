@@ -40,6 +40,9 @@ router.get('/profile', authMiddleware.authCaptain, captainController.getCaptainP
 
 router.get('/logout', authMiddleware.authCaptain, captainController.logoutCaptain);
 
+// heartbeat + open requests (polling instead of websockets)
+router.post('/sync', authMiddleware.authCaptain, captainController.syncCaptain);
+
 
 
 

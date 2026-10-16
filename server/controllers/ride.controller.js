@@ -1,8 +1,6 @@
 const rideService = require("../services/ride.service");
 const mapsService = require("../services/maps.service");
 const { validationResult } = require("express-validator");
-const { sendMessageToSocket } = require("../socket");
-const captainModel = require("../models/captain.model");
 
 const NEARBY_KM = 25;
 
@@ -24,6 +22,11 @@ const withoutOtp = (ride) => {
   delete obj.otp;
   return obj;
 };
+module.exports.withoutOtp = withoutOtp;
+
+// Realtime is done with short polling (works on serverless hosts such as Vercel):
+//  - riders poll GET /api/ride/:id
+//  - captains poll POST /api/captain/sync (which also lists open requests)
 
 module.exports.createRide = async (req, res) => {
   const errors = validationResult(req);
@@ -45,29 +48,19 @@ module.exports.createRide = async (req, res) => {
       userId: req.user._id,
     });
 
-    // notify available captains of the same vehicle type that are close enough
+    // how many online captains of this type are close enough to see the request
     const candidates = await mapsService.getAvailableCaptains(vehicleType);
-    const pickupPoint = ride.pickupCoords;
-    const nearby = candidates.filter((c) => {
+    const notified = candidates.filter((c) => {
       if (c.location?.ltd == null || c.location?.lng == null) return true;
       return (
-        mapsService.haversineKm(pickupPoint, {
+        mapsService.haversineKm(ride.pickupCoords, {
           lat: c.location.ltd,
           lng: c.location.lng,
         }) <= NEARBY_KM
       );
-    });
+    }).length;
 
-    const payload = withoutOtp(ride);
-    payload.user = {
-      _id: req.user._id,
-      fullname: req.user.fullname,
-    };
-    nearby.forEach((captain) =>
-      sendMessageToSocket(captain.socketId, { event: "new-ride", data: payload })
-    );
-
-    res.status(201).json({ ...withoutOtp(ride), notified: nearby.length });
+    res.status(201).json({ ...withoutOtp(ride), notified });
   } catch (error) {
     return fail(res, error);
   }
@@ -97,20 +90,6 @@ module.exports.confirmRide = async (req, res) => {
   }
   try {
     const ride = await rideService.confirmRide(req.body.rideId, req.captain);
-
-    // rider receives the OTP; everybody else only learns the ride is taken
-    sendMessageToSocket(ride.user.socketId, {
-      event: "ride-confirmed",
-      data: ride,
-    });
-    const others = await mapsService.getAvailableCaptains(ride.vehicleType);
-    others.forEach((c) =>
-      sendMessageToSocket(c.socketId, {
-        event: "ride-taken",
-        data: { rideId: String(ride._id) },
-      })
-    );
-
     res.status(200).json(withoutOtp(ride));
   } catch (error) {
     return fail(res, error);
@@ -125,10 +104,6 @@ module.exports.startRide = async (req, res) => {
   const { rideId, otp } = req.method === "GET" ? req.query : req.body;
   try {
     const ride = await rideService.startRide(rideId, otp, req.captain);
-    sendMessageToSocket(ride.user.socketId, {
-      event: "ride-started",
-      data: withoutOtp(ride),
-    });
     res.status(200).json(withoutOtp(ride));
   } catch (error) {
     return fail(res, error);
@@ -142,10 +117,6 @@ module.exports.endRide = async (req, res) => {
   }
   try {
     const ride = await rideService.endRide(req.body.rideId, req.captain);
-    sendMessageToSocket(ride.user.socketId, {
-      event: "ride-ended",
-      data: withoutOtp(ride),
-    });
     res.status(200).json(withoutOtp(ride));
   } catch (error) {
     return fail(res, error);
@@ -159,20 +130,6 @@ module.exports.cancelRide = async (req, res) => {
   }
   try {
     const ride = await rideService.cancelRide(req.body.rideId, req.user._id);
-    if (ride.captain) {
-      sendMessageToSocket(ride.captain.socketId, {
-        event: "ride-cancelled",
-        data: { rideId: String(ride._id) },
-      });
-    } else {
-      const captains = await mapsService.getAvailableCaptains(ride.vehicleType);
-      captains.forEach((c) =>
-        sendMessageToSocket(c.socketId, {
-          event: "ride-taken",
-          data: { rideId: String(ride._id) },
-        })
-      );
-    }
     res.status(200).json(withoutOtp(ride));
   } catch (error) {
     return fail(res, error);
@@ -192,6 +149,21 @@ module.exports.activeRideCaptain = async (req, res) => {
   try {
     const ride = await rideService.activeRideForCaptain(req.captain._id);
     res.status(200).json({ ride: ride ? withoutOtp(ride) : null });
+  } catch (error) {
+    return fail(res, error);
+  }
+};
+
+// Rider polls this: current status, assigned captain (with live location) and OTP.
+module.exports.getRideForUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  try {
+    const ride = await rideService.rideForUser(req.params.id, req.user._id);
+    if (!ride) return res.status(404).json({ message: "Ride not found" });
+    res.status(200).json(ride);
   } catch (error) {
     return fail(res, error);
   }

@@ -147,3 +147,25 @@ module.exports.activeRideForCaptain = (captainId) =>
       .findOne({ captain: captainId, status: { $in: ["accepted", "ongoing"] } })
       .sort({ _id: -1 })
   );
+
+// Rider polling: any status (so completed / cancelled are visible), with OTP for the rider.
+module.exports.rideForUser = (rideId, userId) =>
+  populated(rideModel.findOne({ _id: rideId, user: userId })).select("+otp");
+
+// Open requests a captain can accept: pending, same vehicle type, recent, nearby.
+const REQUEST_MAX_AGE_MS = 10 * 60 * 1000;
+module.exports.pendingRidesFor = async (captain, position, nearbyKm = 25) => {
+  const rides = await rideModel
+    .find({
+      status: "pending",
+      vehicleType: captain.vehicle?.vehicleType,
+      createdAt: { $gte: new Date(Date.now() - REQUEST_MAX_AGE_MS) },
+    })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .populate("user", "fullname");
+  if (!position) return rides;
+  return rides.filter(
+    (r) => !r.pickupCoords || mapService.haversineKm(position, r.pickupCoords) <= nearbyKm
+  );
+};
