@@ -103,7 +103,8 @@ const CaptainHome = () => {
       }
     },
     3000,
-    !!captain?._id
+    !!captain?._id,
+    { background: true } // keep the captain online even when the tab is in the background
   );
 
   /* ---------- live leg: me -> pickup / destination ---------- */
