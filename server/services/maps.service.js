@@ -161,7 +161,7 @@ module.exports.haversineKm = (a, b) => {
 };
 
 // A captain counts as online while the captain app keeps polling /api/captain/sync.
-const ONLINE_WINDOW_MS = 30 * 1000;
+const ONLINE_WINDOW_MS = 60 * 1000;
 module.exports.ONLINE_WINDOW_MS = ONLINE_WINDOW_MS;
 
 module.exports.getAvailableCaptains = async (vehicleType) =>
