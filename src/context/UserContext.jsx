@@ -1,5 +1,7 @@
+"use client";
 import React, { createContext, useState } from "react";
 import axios from "../utils/axios";
+import { signOut } from "next-auth/react";
 
 export const UserDataContext = createContext();
 
@@ -45,6 +47,7 @@ export const UserDataProvider = ({ children }) => {
 
       // Clear user from state
       setUser(null);
+      await signOut({ redirect: false });
     } catch (error) {
       console.error("Logout failed:", error);
       throw error;

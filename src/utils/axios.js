@@ -1,13 +1,16 @@
+"use client";
 import axios from "axios";
+import { signOut } from "next-auth/react";
+import { getAuthToken, getAuthRole } from "@/lib/authToken";
 
 // Configure axios defaults
-const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
+const BASE_URL = "/api";
 
 // Create axios instance with baseURL and default config
 const instance = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -17,18 +20,13 @@ const instance = axios.create({
 // Add request interceptor to attach Authorization header with the correct token
 instance.interceptors.request.use(
   (config) => {
-    // Get the active token type
-    const activeTokenType = localStorage.getItem("activeToken") || "token";
-    const token = localStorage.getItem(activeTokenType);
-
+    const token = getAuthToken();
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor for API calls
@@ -38,23 +36,11 @@ instance.interceptors.response.use(
   },
   async (error) => {
     if (error.response) {
-      if (error.response.status === 401) {
-        // Get the active token type
-        const activeTokenType = localStorage.getItem("activeToken") || "token";
-        const userType = localStorage.getItem("userType");
-
-        // Clear invalid credentials
-        localStorage.removeItem(activeTokenType);
-        localStorage.removeItem(userType === "captain" ? "captain" : "user");
-        localStorage.removeItem("activeToken");
-        localStorage.removeItem("userType");
-
-        // Redirect to appropriate login page
+      // Only an expired/invalid session should log out; login attempts go through NextAuth.
+      if (error.response.status === 401 && getAuthToken()) {
         const loginPath =
-          userType === "captain" ? "/captainlogin" : "/userlogin";
-        if (window.location.pathname !== loginPath) {
-          window.location.href = loginPath;
-        }
+          getAuthRole() === "captain" ? "/captainlogin" : "/userlogin";
+        signOut({ callbackUrl: loginPath });
       }
 
       // Extract error message from response
