@@ -112,6 +112,7 @@ module.exports.endRide = async (rideId, captain) => {
   if (!ride) throw new Error("Ride not found");
   if (ride.status !== "ongoing") throw new Error("Ride not started yet");
   ride.status = "completed";
+  ride.completedAt = new Date();
   await ride.save();
   await captainModel.findByIdAndUpdate(captain._id, { status: "available" });
   return ride;
@@ -169,3 +170,20 @@ module.exports.pendingRidesFor = async (captain, position, nearbyKm = 25) => {
     (r) => !r.pickupCoords || mapService.haversineKm(position, r.pickupCoords) <= nearbyKm
   );
 };
+
+// Ride + payment history (never exposes OTP or the Razorpay signature).
+const HISTORY_LIMIT = 100;
+const historyQuery = (filter) =>
+  rideModel
+    .find(filter)
+    .sort({ createdAt: -1 })
+    .limit(HISTORY_LIMIT)
+    .select("-signature")
+    .populate("user", "fullname email")
+    .populate("captain", "fullname email vehicle");
+
+module.exports.historyForUser = (userId) =>
+  historyQuery({ user: userId, status: { $in: ["completed", "cancelled"] } });
+
+module.exports.historyForCaptain = (captainId) =>
+  historyQuery({ captain: captainId, status: { $in: ["completed", "cancelled"] } });

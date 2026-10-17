@@ -83,6 +83,8 @@ router.post(
 );
 
 router.get("/active", authMiddleware.authUser, rideController.activeRideUser);
+router.get("/history", authMiddleware.authUser, rideController.historyUser);
+router.get("/history-captain", authMiddleware.authCaptain, rideController.historyCaptain);
 router.get(
   "/active-captain",
   authMiddleware.authCaptain,

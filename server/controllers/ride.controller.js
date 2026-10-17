@@ -168,3 +168,19 @@ module.exports.getRideForUser = async (req, res) => {
     return fail(res, error);
   }
 };
+
+module.exports.historyUser = async (req, res) => {
+  try {
+    res.status(200).json({ rides: await rideService.historyForUser(req.user._id) });
+  } catch (error) {
+    return fail(res, error);
+  }
+};
+
+module.exports.historyCaptain = async (req, res) => {
+  try {
+    res.status(200).json({ rides: await rideService.historyForCaptain(req.captain._id) });
+  } catch (error) {
+    return fail(res, error);
+  }
+};
