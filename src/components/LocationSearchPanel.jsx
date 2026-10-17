@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { IoLocationSharp, IoSearch } from "react-icons/io5";
+import { IoClose, IoLocationSharp, IoSearch } from "react-icons/io5";
 import { MdMyLocation } from "react-icons/md";
 import { searchPlaces } from "../lib/maps";
 
@@ -21,6 +21,7 @@ const LocationSearchPanel = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const destRef = useRef(null);
+  const pickRef = useRef(null);
   const reqId = useRef(0);
 
   // mirror externally selected places (e.g. current location) into the inputs
@@ -76,6 +77,16 @@ const LocationSearchPanel = ({
     if (field === "destination" && destination) onDestination(null);
   };
 
+  const clear = (field) => {
+    setTexts((t) => ({ ...t, [field]: "" }));
+    if (field === "pickup") onPickup(null);
+    else onDestination(null);
+    setResults([]);
+    setError("");
+    setActive(field);
+    (field === "pickup" ? pickRef : destRef).current?.focus();
+  };
+
   const choose = (place) => {
     if (active === "pickup") {
       onPickup(place);
@@ -95,7 +106,7 @@ const LocationSearchPanel = ({
     >
       <span className={`h-3 w-3 shrink-0 ${dot}`} />
       <input
-        ref={name === "destination" ? destRef : null}
+        ref={name === "destination" ? destRef : pickRef}
         value={texts[name]}
         onFocus={() => setActive(name)}
         onChange={(e) => type(name, e.target.value)}
@@ -103,6 +114,17 @@ const LocationSearchPanel = ({
         autoComplete="off"
         className="w-full bg-transparent py-3 text-base outline-none placeholder:text-gray-400"
       />
+      {texts[name] && (
+        <button
+          type="button"
+          onClick={() => clear(name)}
+          title="Clear"
+          aria-label={`Clear ${name}`}
+          className="shrink-0 rounded-full p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+        >
+          <IoClose className="text-xl" />
+        </button>
+      )}
       {name === "pickup" && (
         <button
           type="button"
