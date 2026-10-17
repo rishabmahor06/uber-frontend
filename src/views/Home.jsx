@@ -27,7 +27,7 @@ const pt = (c) => (c ? { lat: c.lat, lng: c.lng } : null);
 const Home = () => {
   const navigate = useNavigate();
   const { user, logout } = useContext(UserDataContext);
-  const { position: me } = useGeolocation();
+  const { position: me, request: requestLocation } = useGeolocation();
 
   const [step, setStep] = useState("search");
   const [pickup, setPickup] = useState(null);
@@ -58,21 +58,28 @@ const Home = () => {
 
   /* ---------- current location as pickup ---------- */
   const fillCurrentLocation = async (silent = false) => {
-    if (!me) {
-      if (!silent) toast.error("Waiting for your location. Allow location access.");
-      return;
-    }
     setLocating(true);
     try {
-      const addr = await reverseGeocode(me.lat, me.lng);
+      let pos = me;
+      if (!pos) {
+        if (silent) return;
+        pos = await requestLocation(); // asks for permission if needed
+      }
+      const addr = await reverseGeocode(pos.lat, pos.lng);
       setPickup({
         title: addr.title,
         description: addr.description,
-        lat: me.lat,
-        lng: me.lng,
+        lat: pos.lat,
+        lng: pos.lng,
       });
-    } catch {
-      if (!silent) toast.error("Couldn't find the address of your location");
+    } catch (err) {
+      if (!silent) {
+        toast.error(
+          /location|gps|permission|blocked|took too long/i.test(err?.message || "")
+            ? err.message
+            : "Couldn't find the address of your location"
+        );
+      }
     } finally {
       setLocating(false);
     }
