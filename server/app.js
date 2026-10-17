@@ -6,6 +6,7 @@ const userRoutes = require("./routes/user.routes");
 const captainRoutes = require("./routes/captain.routes");
 const mapsRoutes = require("./routes/maps.routes");
 const rideRoutes = require("./routes/ride.routes");
+const paymentRoutes = require("./routes/payment.routes");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const userModel = require("./models/user.model");
@@ -77,6 +78,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/captain", captainRoutes);
 app.use("/api/maps", mapsRoutes);
 app.use("/api/ride", rideRoutes);
+app.use("/api/payment", paymentRoutes);
 
 // Error handler for JSON parsing
 app.use((error, req, res, next) => {
