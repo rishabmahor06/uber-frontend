@@ -262,7 +262,7 @@ const CaptainHome = () => {
         <FinishRide ride={ride} leg={leg} onFinish={finishRide} finishing={busy} />
       )}
 
-      {step === "completed" && ride && <RideComplete ride={ride} onDone={done} />}
+      {step === "completed" && ride && <RideComplete ride={ride} onDone={done} captainView />}
     </RideLayout>
   );
 };

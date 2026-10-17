@@ -380,7 +380,15 @@ const Home = () => {
       {step === "riding" && ride && <RideInProgress ride={ride} leg={leg} />}
 
       {step === "completed" && ride && (
-        <RideComplete ride={ride} onDone={finish} />
+        <RideComplete
+          ride={ride}
+          onDone={finish}
+          onRideUpdate={(r) => setRide((old) => ({ ...old, ...r }))}
+          rider={{
+            name: [user?.fullname?.firstname, user?.fullname?.lastname].filter(Boolean).join(" "),
+            email: user?.email,
+          }}
+        />
       )}
     </RideLayout>
   );

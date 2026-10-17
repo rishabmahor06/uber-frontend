@@ -1,7 +1,10 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import axios from "../utils/axios";
+import { getPaymentConfig, payRide } from "../lib/razorpay";
 import TripLine from "./TripLine";
-import { fmtKm, fmtMin } from "../lib/maps";
+import { apiError, fmtKm, fmtMin } from "../lib/maps";
 
 // Rider view while the trip is ongoing (live tracking) and after it ends.
 export const RideInProgress = ({ ride, leg }) => {
@@ -34,25 +37,101 @@ export const RideInProgress = ({ ride, leg }) => {
   );
 };
 
-export const RideComplete = ({ ride, onDone }) => (
-  <div className="text-center">
-    <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-brand-lime text-3xl">
-      ✓
+export const RideComplete = ({ ride, onDone, onRideUpdate, rider, captainView = false }) => {
+  const [enabled, setEnabled] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const paid = ride.paymentStatus === "paid";
+  const cash = ride.paymentMethod === "cash";
+
+  useEffect(() => {
+    let live = true;
+    getPaymentConfig()
+      .then((c) => live && setEnabled(!!c.enabled))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const payOnline = async () => {
+    setBusy(true);
+    try {
+      const updated = await payRide(ride, rider);
+      if (updated) {
+        onRideUpdate?.(updated);
+        toast.success("Payment successful");
+      }
+    } catch (err) {
+      toast.error(apiError(err, "Payment failed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const payCash = async () => {
+    setBusy(true);
+    try {
+      const { data } = await axios.post("/payment/cash", { rideId: ride._id });
+      onRideUpdate?.(data);
+    } catch (err) {
+      toast.error(apiError(err, "Couldn't save payment method"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-brand-lime text-3xl">
+        ✓
+      </div>
+      <h3 className="text-2xl font-semibold">{captainView ? "Ride completed" : "You've arrived!"}</h3>
+      <p className="mt-1 text-gray-500">
+        {captainView
+          ? "Trip finished. The rider pays online or in cash"
+          : paid
+          ? `Paid online${ride.paymentId ? ` · ${ride.paymentId}` : ""}`
+          : cash
+            ? "Please pay your captain in cash"
+            : "Choose how you'd like to pay"}
+      </p>
+      <p className="my-4 text-4xl font-extrabold">₹{ride.fare}</p>
+      <TripLine
+        pickup={ride.pickup}
+        destination={ride.destination}
+        className="text-left"
+      />
+
+      {!captainView && !paid && !cash && (
+        <div className="mt-5 grid grid-cols-1 gap-2">
+          {enabled && (
+            <button
+              type="button"
+              onClick={payOnline}
+              disabled={busy}
+              className="w-full rounded-xl bg-brand-lime py-3.5 font-semibold text-brand-navy hover:brightness-95 disabled:opacity-60"
+            >
+              {busy ? "Please wait…" : `Pay ₹${ride.fare} online`}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={payCash}
+            disabled={busy}
+            className="w-full rounded-xl border border-gray-300 py-3.5 font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+          >
+            Pay by cash
+          </button>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onDone}
+        className="mt-3 w-full rounded-xl bg-brand-navy py-3.5 font-semibold text-white hover:bg-black"
+      >
+        Done
+      </button>
     </div>
-    <h3 className="text-2xl font-semibold">You've arrived!</h3>
-    <p className="mt-1 text-gray-500">Please pay your captain in cash</p>
-    <p className="my-4 text-4xl font-extrabold">₹{ride.fare}</p>
-    <TripLine
-      pickup={ride.pickup}
-      destination={ride.destination}
-      className="text-left"
-    />
-    <button
-      type="button"
-      onClick={onDone}
-      className="mt-5 w-full rounded-xl bg-brand-navy py-3.5 font-semibold text-white hover:bg-black"
-    >
-      Done
-    </button>
-  </div>
-);
+  );
+};
