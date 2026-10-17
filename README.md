@@ -72,3 +72,16 @@ pages/api/  Catch-all that serves the Express app (/api/*)
 
 - The public OSM services are for development / light use; use your own geocoding & routing for production.
 - All data is stored in the `uber` database (`MONGO_DB`).
+
+
+## Razorpay payments
+
+After a ride is completed the rider can pay online (Razorpay Checkout) or choose cash.
+Set these in `.env.local` / Vercel env vars (use `rzp_test_` keys while testing):
+
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+
+Flow: `POST /api/payment/create-order` creates an order for the ride fare, Checkout collects the payment,
+`POST /api/payment/verify` checks Razorpay's HMAC signature on the server before marking the ride `paid`.
+Without the keys, only the cash option is shown.
