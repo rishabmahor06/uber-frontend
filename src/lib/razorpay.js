@@ -25,12 +25,12 @@ export const getPaymentConfig = async () => (await axios.get("/payment/config"))
  * resolves null if the rider closes the popup, rejects on failure.
  */
 export const PAY_MODES = [
-  { id: "gpay", label: "Google Pay", icon: "G", color: "#4285f4", method: "upi", app: "google_pay" },
-  { id: "phonepe", label: "PhonePe", icon: "पे", color: "#5f259f", method: "upi", app: "phonepe" },
-  { id: "paytm", label: "Paytm", icon: "P", color: "#00baf2", method: "upi", app: "paytm" },
-  { id: "upi", label: "UPI ID / QR", icon: "₹", color: "#0b1437", method: "upi" },
-  { id: "card", label: "Credit / Debit card", icon: "💳", color: "#111827", method: "card" },
-  { id: "netbanking", label: "Net banking", icon: "🏦", color: "#065f46", method: "netbanking" },
+  { id: "gpay", label: "Google Pay", logo: "/payments/gpay.png", method: "upi", app: "google_pay" },
+  { id: "phonepe", label: "PhonePe", logo: "/payments/phonepe.png", method: "upi", app: "phonepe" },
+  { id: "paytm", label: "Paytm", logo: "/payments/paytm.png", method: "upi", app: "paytm" },
+  { id: "upi", label: "UPI ID / QR", logo: "/payments/upi.png", method: "upi" },
+  { id: "card", label: "Credit / Debit card", icon: "💳", method: "card" },
+  { id: "netbanking", label: "Net banking", icon: "🏦", method: "netbanking" },
 ];
 
 // Checkout config that opens straight on the chosen payment mode.

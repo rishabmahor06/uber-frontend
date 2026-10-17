@@ -107,22 +107,23 @@ export const RideComplete = ({ ride, onDone, onRideUpdate, rider, captainView = 
           {enabled && (
             <>
               <p className="text-left text-sm font-semibold text-gray-700">Pay ₹{ride.fare} with</p>
-              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 {PAY_MODES.map((m) => (
                   <button
                     key={m.id}
                     type="button"
                     onClick={() => payOnline(m)}
                     disabled={busy}
-                    className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-3 text-left hover:border-brand-navy hover:bg-gray-50 disabled:opacity-60"
+                    className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-brand-navy hover:shadow-md disabled:opacity-60"
                   >
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                      style={{ background: m.color }}
-                    >
-                      {m.icon}
+                    <span className="flex h-10 w-full items-center justify-center">
+                      {m.logo ? (
+                        <img src={m.logo} alt="" className="max-h-10 w-full max-w-[110px] object-contain" />
+                      ) : (
+                        <span className="text-3xl">{m.icon}</span>
+                      )}
                     </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-gray-900">{m.label}</span>
+                    <span className="text-xs font-medium text-gray-700">{m.label}</span>
                   </button>
                 ))}
               </div>
