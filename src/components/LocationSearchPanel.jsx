@@ -49,7 +49,9 @@ const LocationSearchPanel = ({
     const ctrl = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const data = await searchPlaces(query.trim(), near, ctrl.signal);
+        const data = await searchPlaces(query.trim(), near, ctrl.signal, (partial) => {
+          if (id === reqId.current) setResults(partial);
+        });
         if (id !== reqId.current) return;
         setResults(Array.isArray(data) ? data : []);
         setError("");
