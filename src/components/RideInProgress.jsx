@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import axios from "../utils/axios";
-import { getPaymentConfig, payRide } from "../lib/razorpay";
+import { PAY_MODES, getPaymentConfig, payRide } from "../lib/razorpay";
 import TripLine from "./TripLine";
 import { apiError, fmtKm, fmtMin } from "../lib/maps";
 
@@ -53,10 +53,10 @@ export const RideComplete = ({ ride, onDone, onRideUpdate, rider, captainView = 
     };
   }, []);
 
-  const payOnline = async () => {
+  const payOnline = async (mode) => {
     setBusy(true);
     try {
-      const updated = await payRide(ride, rider);
+      const updated = await payRide(ride, rider, mode);
       if (updated) {
         onRideUpdate?.(updated);
         toast.success("Payment successful");
@@ -105,14 +105,29 @@ export const RideComplete = ({ ride, onDone, onRideUpdate, rider, captainView = 
       {!captainView && !paid && !cash && (
         <div className="mt-5 grid grid-cols-1 gap-2">
           {enabled && (
-            <button
-              type="button"
-              onClick={payOnline}
-              disabled={busy}
-              className="w-full rounded-xl bg-brand-lime py-3.5 font-semibold text-brand-navy hover:brightness-95 disabled:opacity-60"
-            >
-              {busy ? "Please wait…" : `Pay ₹${ride.fare} online`}
-            </button>
+            <>
+              <p className="text-left text-sm font-semibold text-gray-700">Pay ₹{ride.fare} with</p>
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+                {PAY_MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => payOnline(m)}
+                    disabled={busy}
+                    className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-3 text-left hover:border-brand-navy hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                      style={{ background: m.color }}
+                    >
+                      {m.icon}
+                    </span>
+                    <span className="min-w-0 truncate text-sm font-medium text-gray-900">{m.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400">or</p>
+            </>
           )}
           <button
             type="button"
