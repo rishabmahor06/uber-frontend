@@ -64,6 +64,7 @@ module.exports.verifyPayment = async (rideId, userId, payload) => {
   ride.signature = razorpay_signature;
   ride.paymentStatus = "paid";
   ride.paymentMethod = "online";
+  ride.paidAt = new Date();
   await ride.save();
   return ride;
 };

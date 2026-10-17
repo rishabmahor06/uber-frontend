@@ -48,6 +48,8 @@ const rideSchema = new mongoose.Schema({
     type: String,
     enum: ["cash", "online"],
   },
+  paidAt: { type: Date },
+  completedAt: { type: Date },
   paymentId: {
     type: String,
   },
