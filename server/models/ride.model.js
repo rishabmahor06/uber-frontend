@@ -39,6 +39,15 @@ const rideSchema = new mongoose.Schema({
   distance: {
     type: Number,
   },
+  paymentStatus: {
+    type: String,
+    enum: ["unpaid", "paid"],
+    default: "unpaid",
+  },
+  paymentMethod: {
+    type: String,
+    enum: ["cash", "online"],
+  },
   paymentId: {
     type: String,
   },
