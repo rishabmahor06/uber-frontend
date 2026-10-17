@@ -325,6 +325,7 @@ const Home = () => {
       title="Speed"
       subtitle={user?.fullname?.firstname ? `Hi, ${user.fullname.firstname}` : "Book a ride"}
       onLogout={handleLogout}
+      onProfile={() => navigate("/profile")}
     >
       <Toaster position="top-center" />
 

@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
-import { IoLogOut } from "react-icons/io5";
+import { IoLogOut, IoPerson } from "react-icons/io5";
 
 const logo = "/speed-logo.png";
 
 // Full-screen map with a floating header and a responsive panel:
 // bottom sheet on phones, left-hand card on desktop.
-const RideLayout = ({ map, children, title, subtitle, onLogout }) => (
+const RideLayout = ({ map, children, title, subtitle, onLogout, onProfile }) => (
   <div className="relative h-[100dvh] w-full overflow-hidden bg-gray-100">
     <div className="absolute inset-0">{map}</div>
 
@@ -18,6 +18,18 @@ const RideLayout = ({ map, children, title, subtitle, onLogout }) => (
           {subtitle && <p className="text-[11px] text-gray-500">{subtitle}</p>}
         </div>
       </div>
+      <div className="pointer-events-auto flex items-center gap-2">
+        {onProfile && (
+          <button
+            type="button"
+            onClick={onProfile}
+            aria-label="Profile and history"
+            title="Profile and history"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-xl text-brand-navy shadow-lg backdrop-blur hover:bg-brand-lime/40"
+          >
+            <IoPerson />
+          </button>
+        )}
       <button
         type="button"
         onClick={onLogout}
@@ -26,6 +38,7 @@ const RideLayout = ({ map, children, title, subtitle, onLogout }) => (
       >
         <IoLogOut />
       </button>
+      </div>
     </header>
 
     <section data-sheet className="absolute inset-x-0 bottom-0 z-30 flex max-h-[72dvh] flex-col rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.18)] lg:inset-x-auto lg:bottom-5 lg:left-5 lg:top-24 lg:max-h-none lg:w-[420px] lg:rounded-3xl lg:shadow-2xl">

@@ -229,6 +229,7 @@ const CaptainHome = () => {
       title="Speed Captain"
       subtitle={captain?.fullname?.firstname ? `Hi, ${captain.fullname.firstname}` : "Driver"}
       onLogout={handleLogout}
+      onProfile={() => navigate("/captain-profile")}
     >
       <Toaster position="top-center" />
 
