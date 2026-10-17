@@ -15,7 +15,7 @@ router.get(
 
 router.get(
   "/get-suggestions",
-  query("input").isString().isLength({ min: 2 }),
+  query("input").isString().isLength({ min: 1 }),
   mapController.getAutoCompleteSuggestions
 );
 

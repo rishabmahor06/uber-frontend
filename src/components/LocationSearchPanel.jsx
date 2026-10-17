@@ -38,7 +38,7 @@ const LocationSearchPanel = ({
   const selected = active === "pickup" ? pickup : destination;
 
   useEffect(() => {
-    if (selected || !query || query.trim().length < 3) {
+    if (selected || !query || query.trim().length < 1) {
       setResults([]);
       setLoading(false);
       setError("");
@@ -46,21 +46,26 @@ const LocationSearchPanel = ({
     }
     const id = ++reqId.current;
     setLoading(true);
+    const ctrl = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const data = await searchPlaces(query.trim(), near);
+        const data = await searchPlaces(query.trim(), near, ctrl.signal);
         if (id !== reqId.current) return;
         setResults(Array.isArray(data) ? data : []);
         setError("");
       } catch (err) {
+        if (err?.name === "AbortError" || err?.code === "ERR_CANCELED") return;
         if (id !== reqId.current) return;
         setResults([]);
         setError("Couldn't load suggestions. Check your connection.");
       } finally {
         if (id === reqId.current) setLoading(false);
       }
-    }, 400);
-    return () => clearTimeout(timer);
+    }, 120);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
   }, [query, active, selected, near?.lat, near?.lng]);
 
   const type = (field, value) => {
@@ -130,13 +135,13 @@ const LocationSearchPanel = ({
         {!loading &&
           !error &&
           !selected &&
-          query?.trim().length >= 3 &&
+          query?.trim().length >= 1 &&
           results.length === 0 && (
             <p className="p-3 text-sm text-gray-500">No places found</p>
           )}
-        {!selected && query?.trim().length < 3 && (
+        {!selected && query?.trim().length < 1 && (
           <p className="p-3 text-sm text-gray-400">
-            Type at least 3 letters to search a place, area or landmark.
+            Start typing a place, area or landmark.
           </p>
         )}
         <ul className="divide-y divide-gray-100">
